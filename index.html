@@ -1,0 +1,571 @@
+<!DOCTYPE HTML>
+<html>
+     <head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+<title>Excavator</title>
+<link href="static/css/themes/vader/jquery-ui.css" id="theme" type="text/css" rel="stylesheet" />
+<link href="static/css/default.css" rel="stylesheet" />
+
+
+<script type="text/javascript" src="static/scripts/jquery-2.0.3.min.js"></script>
+<script type="text/javascript" src="static/scripts/jquery-ui-1.10.3.custom.min.js"></script>
+<script type="text/javascript" src="static/scripts/jquery.tmpl.js"></script>
+
+
+<script type="text/javascript" src="static/scripts/jquery.cycle.all.js"></script>
+<script type="text/javascript" src="static/scripts/points.js"></script>
+<script type="text/javascript" src="static/scripts/touchpunch.min.js"></script>
+
+
+<!-- replace with jqChart -->
+<script type="text/javascript" src="static/scripts/jquery.jqplot.min.js"></script>
+<script type="text/javascript" src="static/scripts/plugins/jqplot.canvasTextRenderer.min.js"></script>
+<script type="text/javascript" src="static/scripts/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+<script type="text/javascript" src="static/scripts/plugins/jqplot.canvasOverlay.min.js"></script>
+<script type="text/javascript" src="static/scripts/plugins/jqplot.meterGaugeRenderer.min.js"></script>
+
+<!-- controls -->
+<script type="text/javascript" src="static/scripts/joystick.js"></script>
+<script type="text/javascript" src="static/scripts/servoslave.js"></script>
+<script type="text/javascript" src="static/scripts/positionswitch.js"></script>
+<script type="text/javascript" src="static/scripts/AnalogReader.js"></script>
+
+<!-- performance -->
+<script type="text/javascript" src="static/scripts/stats.js"></script>
+
+
+<script type="text/javascript">
+
+
+    var CustomEvent;
+
+    CustomEvent = function (event, params) {
+        var evt;
+        params = params || {
+            bubbles: false,
+            cancelable: false,
+            detail: undefined
+        };
+        evt = document.createEvent("CustomEvent");
+        evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+        return evt;
+    };
+
+    CustomEvent.prototype = window.Event.prototype;
+
+    window.CustomEvent = CustomEvent;
+
+    function MixTypeAvg(outputconfig, arr) {
+        return parseInt((arr.reduce(function (a, b) {
+                        return a + b;
+        })) / outputconfig.axis.length);
+    }
+
+
+
+    //ΔChA = (q(Δ ChX) + r(Δ ChY))
+    //ΔChB = (q(Δ ChX) - r(ΔChY))
+    //Where Δ* means deviation from neutral position q & r are the mixing ratio, a number of 0.5 or 1 
+
+
+
+    function MixTypeMin(outputconfig, arr) {
+        return arr.Min();
+    }
+
+    function MixTypeMax(outputconfig, arr) {
+        return arr.Max();
+    }
+
+    Array.prototype.Max = function () {
+        return Math.max.apply(null, this);
+    };
+
+    Array.prototype.Min = function () {
+        return Math.min.apply(null, this);
+    };
+
+    Number.prototype.clamp = function (min, max) {
+        return Math.min(Math.max(this, min), max);
+    };
+
+
+</script>
+
+<script type="text/javascript" src="static/scripts/defaults.js"></script>         
+
+<script type="text/javascript">
+    "use strict";
+
+
+    var Transmitter = new Worker("/static/scripts/DataTrans.js");
+
+    var url = window.location.href.replace('http', 'ws')
+
+    Transmitter.postMessage({ cmd: "setupSocket", url: url });
+
+    Transmitter.onmessage = function (event) {
+
+
+        var incoming = event.data;
+        try {
+            incoming = JSON.parse(event.data);
+        }
+        catch (e) {
+        }
+        
+
+        if (incoming.type == "lgs") {
+
+            var logs = incoming.data;
+
+            $('.logs').empty();
+
+            for (var i = 0; i < logs.length; i++) {
+                $('.logs').append('<div class="' + logs[i].type + '" style="display: none;">' + logs[i].message + '</div>');
+            }
+
+
+            $('.logs div').each(function (i) {
+
+                $(this).delay((i++) * 3000).fadeTo(1000, 1).delay(1000).fadeOut(1000, function () { $(this).remove(); });
+            })
+
+
+        }
+        if (incoming.type == "console") {
+            console.log(incoming.message);
+        }
+
+        if (incoming.type == "sdr") {
+            $(window).trigger(incoming.dt + "_" + incoming.idx + "_data", incoming.result);
+        }
+        if (incoming.type == "os") {
+
+            $('.stats .cpu span').html((incoming.data.cpuLoad[0] * 100).toFixed(2) + "%");
+
+            $('.stats .mem span').html(((incoming.data.freeMem / incoming.data.totalMem) * 100).toFixed(2) + "%");
+
+        }
+
+    };
+
+    window.sendServerRequest = function (data) {
+        Transmitter.postMessage({ cmd: "serverRequest", request: data });
+    };
+
+    window.map = function (s, a1, a2, b1, b2) {
+        return b1 + (s - a1) * (b2 - b1) / (a2 - a1);
+    };
+
+    var controls;
+    var controlObjs = [];
+    var enable = false;
+    var currentTime = 0;
+    var delta = 0;
+    var lastTime = new Date().getTime();
+    var interval = (1000 / 60);
+
+    //var uiUpdates = [];
+
+    //var lastData = new Uint16Array(16);
+    //var bufferedAmount = 72;
+
+    //var transmitter;
+
+    function UILoop() {
+        window.requestAnimationFrame(UILoop);
+
+        currentTime = new Date().getTime();
+        delta = (currentTime - lastTime);
+
+       
+        if (delta > interval) {
+
+            for (var i = 0; i < controlObjs.length; i++) {
+
+                var obj = controlObjs[i];
+
+                if (typeof (obj.Update) == 'function') {
+                    obj.Update();
+                }
+
+            }
+                
+            lastTime = new Date().getTime();
+        }
+
+    }
+
+
+
+
+    if (localStorage.controls == null) {
+        localStorage.controls = JSON.stringify(defaultControls);
+    }
+
+    function StartController() {
+
+        UILoop();
+
+        controls = JSON.parse(localStorage.controls);
+
+        for (var c = 0; c < controls.length; c++) {
+
+            if (controls[c] != null) {
+                var type = controls[c].Type;
+                var ctrlObj;
+                try {
+
+                    var obj = new window[type](controls[c], c);
+
+                    if (obj.Init == null) {
+                        throw "No init method defined";
+                    }
+
+                    if (obj.Draw == null) {
+                        throw "No draw method defined";
+                    }
+
+                    obj.Init()
+                    ctrlObj = obj.Draw();
+
+                    if (ctrlObj != null) {
+                        $(ctrlObj.container).append(ctrlObj.element);
+
+                        if (obj.DrawComplete) {
+                            obj.DrawComplete();
+                        }
+
+                    }
+
+                    controlObjs.push(obj);
+
+                } catch (e) {
+                    alert("Error adding: " + controls[c].Name + ', ' + e.message);
+                }
+            }
+
+        }
+
+        Transmitter.postMessage({ cmd: "startTrans" });
+
+    }
+      
+
+
+    var pointers = [];
+    var lastDataSet = new Date().getTime();
+    var dataRate = (1000 / 2);
+ 
+    $(document).ready(function () {
+
+
+        document.ontouchstart = function (e) {
+            e.preventDefault();
+        }
+
+        window.onbeforeunload = function (e) {
+            
+            Transmitter.postMessage({ cmd: "unload" });
+            Transmitter.terminate();
+
+        };
+
+
+        var stats = new Stats();
+        stats.getDomElement().style.position = 'absolute';
+        stats.getDomElement().style.right = '0px';
+        stats.getDomElement().style.top = '3px';
+        document.body.appendChild(stats.getDomElement());
+        setInterval(function () { stats.update(); }, 1000 / 60);
+
+
+        $(document.body).on('pointerdown', function (e) {
+            pointers.push(e.pointerId);
+            enable = true;
+        });
+
+        $(document.body).on('pointerup', function (e) {
+
+            var index = pointers.indexOf(e.pointerId);
+            if (index > -1) {
+                pointers.splice(index, 1);
+            }
+
+            if (pointers.length == 0) {
+                enable = false;
+            }
+
+        });
+
+
+        StartController();
+
+        $('.menu a').button();
+
+        $('.Reset').bind('click', function (e) {
+            e.preventDefault();
+            var sure = confirm("This will reset to defaults, Are you sure?");
+            if (sure) {
+                localStorage.clear();
+                window.location.reload(true);
+            }
+        });
+
+        $('.Save').bind('click', function (e) {
+            console.log(localStorage.controls);
+        });
+
+        window.addEventListener('servoInputChange', function (e) {
+            Transmitter.postMessage({ cmd: "inputChange", input: e.detail });
+        });
+
+
+    });
+
+ 
+</script>
+
+<script type="text/x-jquery-tmpl" id="servoSlaveAdd">
+    <table>
+        <tr>
+            <td>Name:</td><td><input type="text" class="name" value="${name}" /></td>
+        </tr>
+        <tr>
+        <td>Channel:</td>
+            <td>
+            <select class="channel"> 
+                {{each(i,v) Channels }}
+                    <option value="${i}">${i + 1}</option>
+                {{/each}}
+            </select>
+            </td>
+        </tr>
+    </table>
+</script>
+<script type="text/x-jquery-tmpl" id="mixTemplate">
+    <table class="mixTable">
+        {{if $data.mix != null}}
+<tr>
+    <td colspan="4">Parent</td>
+    <td colspan="2">Self</td>
+</tr>
+    {{/if}}
+    {{each(i, m) mix}}
+    {{if m != null}}
+        <tr class="mix${i}">
+        <td>
+            <input name="name{i}"  type="text" class="mixprop" data-type="name" data-index="${i}" style="width: 60px;" value="${$data.mix[i].name}" />
+        </td>
+        <td>
+            <select name="parent{i}"  class="mixprop" data-type="parent" data-index="${i}" style="width: 60px;">
+            {{each(i, ctrl) controls}}
+                {{if ctrl != null }}
+                {{if $data.Name == ctrl.Name && $data.Type == "JoyStick"}}
+                
+                {{else}}
+                <option {{if m.parent != null && controls[m.parent].Name == ctrl.Name}}selected="selected"{{/if}} value="${i}">${ctrl.Name}</option>
+                {{/if}}
+                {{/if}}
+            {{/each}} 
+            </select>
+        </td>
+        <td>  
+            <!-- data selectors? remove extra css class parentAxis -->
+            <select name="parentAxis${i}" class="mixprop parentAxis${i}" data-type="parentAxis" data-index="${i}" class="mixparentAxis"  style="width: 60px;">
+            {{each(key, axis) controls[m.parent].axis}}
+            <option {{if m.parentAxis != null && parseInt(m.parentAxis) == key}}selected="selected"{{/if}} value="${key}">Ch ${controls[m.parent].axis[key].channel + 1} - ${controls[m.parent].axis[key].name}</option>
+            {{/each}} 
+            </select>
+        </td>
+        <td>
+            <select    name="above1{i}"  class="parentMix" data-index="${i}" data-location="above" data-id="1">
+                {{each(i, range) JoyStickNamedRanges}}
+                <option {{if m.above[1] == range.value}}selected="selected"{{/if}} value="${range.value}">${range.text}</option>
+                {{/each}} 
+            </select>
+            <select  name="above0{i}" class="parentMix" data-index="${i}" data-location="above" data-id="0">
+                {{each(i, range) JoyStickNamedRanges}}
+                <option {{if m.above[0] == range.value}}selected="selected"{{/if}} value="${range.value}">${range.text}</option>
+                {{/each}} 
+            </select>
+            <select  name="below1{i}" class="parentMix" data-index="${i}" data-location="below" data-id="1">
+                {{each(i, range) JoyStickNamedRanges}}
+                <option {{if m.below[1] == range.value}}selected="selected"{{/if}} value="${range.value}">${range.text}</option>
+                {{/each}} 
+            </select>
+            <select name="below0{i}"  class="parentMix" data-index="${i}" data-location="below" data-id="0">
+                {{each(i, range) JoyStickNamedRanges}}
+                <option {{if m.below[0] == range.value}}selected="selected"{{/if}} value="${range.value}">${range.text}</option>
+                {{/each}} 
+            </select>
+        </td>
+        <td>
+            <select name="axis{i}" class="mixprop" data-type="axis" data-index="${i}" class="mixthisAxis"  style="width: 60px;"> 
+                {{each(key, ax) $data.axis}}
+                <option {{if m.axis != null && m.axis == key}}selected="selected"{{/if}} value="${key}">Ch ${ax.channel + 1} - ${ax.name}</option>
+                {{/each}}        
+            </select>
+        </td>
+        <td><a href="#" class="removeMix" data-index="${i}">Remove</a></td>
+        </tr>
+    {{/if}}
+    {{/each}} 
+    </table> 
+</script>
+<script type="text/x-jquery-tmpl" id="controlConfig">
+<div id="tabs" title="Control Config" class="controlConfig">
+  <ul>
+    <li><a href="#general-tab">General</a></li>
+    {{if $data.mix != null }}
+    <li><a href="#mix-tab">Mixing</a></li>
+    {{/if}}
+    {{if $data.mixOutputs != null }}
+    <li><a href="#mixoutput-tab">Outputs</a></li>
+    {{/if}}
+    {{if $data.axis != null }}
+    {{each(key, ax) axis}}
+    <li data-axis="${key}"><a href="#${ax.channel}-tab">Ch ${ax.channel + 1}</a></li>
+    {{/each}} 
+    {{/if}}
+  </ul>
+  <div id="general-tab">
+     <p>
+        Control configation panel, to update the individual axis please select the tabs from above.
+     </p>     
+     <hr />     
+      <table>
+          <tr>
+              <td><label>Name:</label> <input type="text" style="width: 100px;" class="controlprop" data-type="Name" value="${Name}" /></td>
+              {{if $data.size != null}}
+              <td><label>Size:</label> <input type="text" style="width: 20px;" class="spinner" data-index="1" data-type="size" value="${size[1]}" /> /  <input type="text" style="width: 20px;" class="spinner" data-index="0" data-type="size" value="${size[0]}" /></td>
+              {{/if}}
+              <td><label>Position:</label> <input type="text" style="width: 20px;" class="spinner" data-index="1" data-type="position" value="${position[1]}" /> /  <input type="text" style="width: 20px;" class="spinner" data-index="0" data-type="position" value="${position[0]}" /></td>
+
+              <td><label>Visual Style:</label> 
+
+                <select class="controlprop" data-type="cssClass"> 
+                        <option value="default">Default</option>
+                </select>
+
+              </td>
+          </tr>
+
+
+          <tr>
+             <td colspan="4">
+                 <hr>
+             <div><label>Notes:</label></div>
+             <textarea class="description" style="width: 100%; height: 75px;" class="controlprop"  data-type="Description" >${description}</textarea>
+             </td>
+          </tr>
+      </table>
+    </div>
+   {{if $data.mix != null }}
+   <div id="mix-tab">
+        <p>Mixing Panel, Mixing is a child to parent relation so you will mapping the parent control axis to one of the axis of this control. The end points, center and throttle curve are individual</p>
+        <hr />
+        <table>
+            <tr>
+                <td><label>Channel Mixing</label></td>
+                <td style="text-align: right"><a href="#" class="newMix">Add New</a></td>
+            </tr>
+        </table>
+        <div class="mixing">
+            {{tmpl($data) "#mixTemplate"}}
+        </div>
+    </div>
+    {{/if}}
+    {{if $data.mixOutputs != null }}
+    <div id="mixoutput-tab">
+        {{each(i,mo) mixOutputs }}
+        <table>
+            <tr>
+                <td><label>Name: </label><input type="text" class="outputName" value="${mo.name}" /></td>
+
+            </tr>
+        </table>
+
+        {{/each}}
+    </div>
+    {{/if}}
+
+    {{each(key, ax) axis}}
+    <div id="${ax.channel}-tab">
+        <table>
+            <tr>
+                <td><label>Name: </label><input type="text" class="axisName" style="width: 75px;" data-axis="${key}" value="${ax.name}" /></td>
+                <td><label>Ch: </label>
+
+                <select class="channel" class="channel" data-axis="${key}" > 
+                    {{each(i,v) Channels }}
+                        <option value="${i}" {{if ax.channel == i}}selected="selected"{{/if}}>${i + 1}</option>
+                    {{/each}}
+                </select>
+
+
+                </td>
+              {{if Type == "JoyStick"}}
+              <td><label>Tension:</label> 
+            <select class="springTension" data-axis="${key}" > 
+                 {{each(i,t) DefaultTension}}
+                    <option {{if ax.springTension == t.value}}selected="selected"{{/if}}  value="${t.value}">${t.name}</option>
+                 {{/each}}   
+            </select>
+              </td>
+              {{/if}}
+
+                <td><label>Output: </label><input type="checkbox" class="active" data-axis="${key}" {{if ax.enabled}} checked="checked"{{/if}} /></td>
+                <td><label>Reverse: </label><input type="checkbox" class="reverse" data-axis="${key}" {{if ax.reverse}} checked="checked"{{/if}} /></td>
+            </tr>
+        </table>
+        <hr />
+          <label>Current Throw: <span id="min${key}">${ax.limits.min}</span> - <span id="max${key}">${ax.limits.max}</span></label>
+        <div id="minmax${key}" class="minmax" data-axis="${key}" data-min="${ax.limits.min}" data-max="${ax.limits.max}"></div>
+    
+        <hr />
+          <label>Current Center/Sub Trim: <span id="currentCenter${key}">${ax.limits.center}</span></label>
+        <div id="center${key}" class="center" data-axis="${key}" data-value="${ax.limits.center}"></div>
+    
+        <hr />
+        <label>Exponential High: <span class="expoValue${key}above">${ax.limits.expo.above}</span></label>
+        <div class="expo" data-axis="${key}" data-location="above" data-value="${ax.limits.expo.above}"></div>
+        <label>Exponential Low: <span class="expoValue${key}below">${ax.limits.expo.below}</span></label>
+        <div class="expo" data-axis="${key}" data-location="below" data-value="${ax.limits.expo.below}"></div>
+        <div class="expoChart${key}" data-axis="${key}"  style="height: 175px; width:510px;"></div>
+  </div>
+  {{/each}}
+  
+</div>
+</script>
+
+</head>
+
+<body class="ui-widget-content">
+    <div class="controls">
+        <div class="toolBar ui-widget-content">
+            <img src="static/images/raspberry.png" class="logo" />
+            <div class="serverStats ui-corner-all">
+                <div class="logs">
+
+                </div>
+                <div class="stats">
+                    <div class="cpu">CPU <span>100.00%</span></div>
+                    <div class="mem">MEM <span>100.00%</span></div>
+                </div>
+            </div>
+            <div class="menu">
+            <a href="#" class="Start" style="display: none;">Start Trans</a>
+            <a href="#" class="Start" style="display: none;">Stop Trans</a>
+            <a href="#" class="Reset">Reset</a>
+            <a href="#" class="Save">Save</a>
+            <a href="#" class="Load">Load</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
+
+

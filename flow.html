@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script type="text/javascript" src="static/scripts/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="static/scripts/defaults.js"></script>      
+    <script type="text/javascript" src="static/scripts/go.js"></script>     
+    <script>
+
+        function init() {
+
+            var $ = go.GraphObject.make;  // for conciseness in defining templates
+
+            myDiagram = $(go.Diagram, "myDiagram",  // create a Diagram for the DIV HTML element
+                          {
+                              initialContentAlignment: go.Spot.Center
+                          });  // center the content
+
+            // define a simple Node template
+            myDiagram.nodeTemplate =
+              $(go.Node, "Auto",
+                $(go.Shape, "RoundedRectangle",
+                  // Shape.fill is bound to Node.data.color
+                  new go.Binding("fill", "color")),
+                $(go.TextBlock,
+                  { margin: 3 },  // some room around the text
+                  // TextBlock.text is bound to Node.data.key
+                  new go.Binding("text", "key")
+
+
+
+
+
+
+                  ),
+        $(go.Panel, "Vertical",
+          {
+              row: 1, column: 0,
+              itemTemplate:
+                $(go.Panel,
+                  {
+                      _side: "left",
+                      fromSpot: go.Spot.Left, toSpot: go.Spot.Left,
+                      fromLinkable: true, toLinkable: true, cursor: "pointer",
+                      //contextMenu: portMenu
+                  },
+                  new go.Binding("portId", "portId"),
+                  $(go.Shape, "Rectangle",
+                    {
+                        stroke: null,
+                        desiredSize: new go.Size(10, 10),
+                        margin: new go.Margin(1, 0)
+                    },
+                    new go.Binding("fill", "portColor"))
+                )  // end itemTemplate
+          },
+          new go.Binding("itemArray", "leftArray")
+        )
+
+              );
+
+
+
+
+
+            myDiagram.linkTemplate =
+               $(go.Link,
+
+              $(go.Shape),
+              $(go.Shape, {
+
+
+
+                  toArrow: "Standard"
+              }),
+              $(go.Panel, "Auto",  // this whole Panel is a link label
+                $(go.Shape, "Border", { fill: "white", stroke: "black" }),
+                $(go.TextBlock, { margin: 3 },
+                  new go.Binding("text", "text"))
+              )
+            );
+
+
+            if (localStorage.controls == null) {
+                localStorage.controls = JSON.stringify(defaultControls);
+            }
+
+            var controlDefs = JSON.parse(localStorage.controls);
+
+
+            // but use the default Link template, by not setting Diagram.linkTemplate
+
+            // create the model data that will be represented by Nodes and Links
+            var controls = [];
+
+            var mixes = [];
+
+            for (var i = 0; i < controlDefs.length; i++) {
+                var c = controlDefs[i];
+
+                var control = { key: c.Name, color: "lightblue" };
+
+                control.leftArray = [];
+                if (c.axis != null) {
+
+                    for (var f = 0; f < c.axis.length; f++) {
+
+                        control.leftArray.push({ "portColor": c.axis[f].enabled ? "#425e5c" : "#F3F3F3", "portId": "axis" + c.axis[f].channel });
+                    }
+
+                    //"leftArray":[ {"portColor":"#425e5c", "portId":"left0"} ]
+
+                    if (c.mix) {
+                        for (var e = 0; e < c.mix.length; e++) {
+
+                            var m = c.mix[e];
+                            if (m != null) {
+                                var parent = controlDefs[m.parent];
+                                mixes.push({
+                                    from: c.Name,
+                                    to: parent.Name,
+                                    text: m.name,
+                                    fromPort: "axis" + parent.axis[m.parentAxis].channel,
+                                    toPort: "axis" + c.axis[m.axis].channel
+                                });
+                            }
+
+                        }
+
+                    }
+                }
+
+                //console.log(control);
+
+                controls.push(control);
+            }
+
+
+
+            myDiagram.model = new go.GraphLinksModel(controls, mixes);
+            myDiagram.undoManager.isEnabled = true;
+        }
+ 
+        $(document).ready(function () {
+            init();
+        });
+
+    </script>
+    
+     
+</head>
+<body>
+<div id="myDiagram" style="border: 1px solid black; border-image: none; width: 400px; height: 400px;"></div>
+</body>
+</html>

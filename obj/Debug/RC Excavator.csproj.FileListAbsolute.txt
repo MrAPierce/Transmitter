@@ -1,0 +1,21 @@
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\WebApplication2.dll
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\WebApplication2.pdb
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.AspNet.SignalR.Core.dll
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.AspNet.SignalR.Owin.dll
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.AspNet.SignalR.SystemWeb.dll
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.Owin.dll
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.Owin.Host.SystemWeb.dll
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.Owin.Security.dll
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.Web.Infrastructure.dll
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Newtonsoft.Json.dll
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Owin.dll
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.AspNet.SignalR.Core.xml
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.AspNet.SignalR.Owin.xml
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.AspNet.SignalR.SystemWeb.xml
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.Owin.xml
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.Owin.Host.SystemWeb.xml
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Microsoft.Owin.Security.xml
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\bin\Newtonsoft.Json.xml
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\obj\Debug\RC Excavator.csprojResolveAssemblyReference.cache
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\obj\Debug\WebApplication2.dll
+C:\Users\adminadam\Desktop\Exxcavator Software\Excavator\obj\Debug\WebApplication2.pdb
