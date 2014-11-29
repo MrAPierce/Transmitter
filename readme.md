@@ -11,58 +11,57 @@ UI updating is handled by utilizing requestAnimationFrame which produces smooth 
 
 
 ### Hardware: 
-	Raspberry PI,
-	Adafruit 16 Ch I2C Servo Controller
+Raspberry PI,
+Adafruit 16 Ch I2C Servo Controller
 	
 ### Server:
-	Node.js
-	Adafruit 16 Ch - Driver (found on npm)
+Node.js
+Adafruit 16 Ch - Driver (found on npm)
 
 ### Client
-	Surface Pro 1
+Surface Pro 1
 
 ### Installing / Setup
 Install node.js on raspberry pi, deploy site to pi, run server.js via node.
 	
 
 ### Features
-	General UI
-		Control Positioning
-		Control Styling
-		Touch Feedback
-		Mixing Feedback
-		Fast Update
+General UI
+	Control Positioning
+	Control Styling
+	Touch Feedback
+	Mixing Feedback
+	Fast Update
 
-	Joystick Control
-		End Points
-		Exponential Range
-		Centring
-		Mixing
+Joystick Control
+	End Points
+	Exponential Range
+	Centring
+	Mixing
 
-	ServoSlave Control
-		Input Mixing
-		Output Mixing
+ServoSlave Control
+	Input Mixing
+	Output Mixing
 
-	Position Switch
-		Dynamic Button Switch
-		Vert/Hor Layout
+Position Switch
+	Dynamic Button Switch
+	Vert/Hor Layout
 		
 
 ### Left to do
-	
-	Controls
-		Servoslave convert from min,center,max to percentage
-	Server
-		install spi module, download mcp3008.js
-	Interface
-		Data rate etc interface, change data rate
-		IOS touch event
-		Drag and drop controls from controls intrface
-		Add more style options
-	Future
-		Track view Editor for Recording of movements, tweaking of movements
-		Camera Stream
-		Port to UI to Knockoutjs
+Controls
+	Servoslave convert from min,center,max to percentage
+Server
+	install spi module, download mcp3008.js
+Interface
+	Data rate etc interface, change data rate
+	IOS touch event
+	Drag and drop controls from controls intrface
+	Add more style options
+Future
+	Track view Editor for Recording of movements, tweaking of movements
+	Camera Stream
+	Port to UI to Knockoutjs
 
 
 
