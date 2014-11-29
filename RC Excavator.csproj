@@ -638,7 +638,7 @@
     <Content Include="static\scripts\servoslave.js" />
     <Content Include="static\scripts\touchpunch.min.js" />
     <Content Include="static\scripts\types.js" />
-    <Content Include="TODO.txt" />
+    <None Include="readme.md" />
     <Content Include="web.config" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>

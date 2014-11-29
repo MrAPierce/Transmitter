@@ -1,9 +1,9 @@
 ﻿Node.js RC Transmitter
 ======================
 
-Based off the function of a regular radio transmitter. built for raspberrypi 256, client was surface pro IE10 (all I had availible) so touch on other devices may not function as expected.
+Based off the function of a regular radio transmitter. Built for raspberrypi 256, client was surface pro IE10 (all I had available) so touch on other devices may not function as expected.
 
-Raspberry pi serves website and client connects back to raspberry pi via websocket conection. Data is send 50 time a second, sent via websocket as Uint16Array(16) via a webworker.
+Raspberry pi serves website and client connects back to raspberry pi via websocket connection. Data is send 50 time a second, sent via websocket as Uint16Array(16) via a webworker.
 
 UI updating is handled by utilizing requestAnimationFrame which produces smooth movement of ui controls and feedback.
 
@@ -20,7 +20,7 @@ UI updating is handled by utilizing requestAnimationFrame which produces smooth 
 	Surface Pro 1
 
 ### Installing / Setup
-Install node.js on raspberry pi, delpoy site to pi, run server.js via node.
+Install node.js on raspberry pi, deploy site to pi, run server.js via node.
 	
 
 ### Features
@@ -33,9 +33,9 @@ Install node.js on raspberry pi, delpoy site to pi, run server.js via node.
 
 	Joystick Control
 		End Points
-		Exponetial Range
-		Centering
-		Mxing
+		Exponential Range
+		Centring
+		Mixing
 
 	ServoSlave Control
 		Input Mixing
@@ -58,19 +58,11 @@ Install node.js on raspberry pi, delpoy site to pi, run server.js via node.
 		Drag and drop controls from controls intrface
 		Add more style options
 	Future
-		Track view Editor for Recording of movements, tweeking of movements
+		Track view Editor for Recording of movements, tweaking of movements
 		Camera Stream
 		Port to UI to Knockoutjs
 
 
-Adam Pierce, 2014
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
 
 
