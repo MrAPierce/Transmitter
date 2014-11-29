@@ -3,6 +3,8 @@
 
 Based off the function of a regular radio transmitter. Built for raspberrypi 256, client was surface pro IE10 (all I had available) so touch on other devices may not function as expected.
 
+![Alt text](/screen.jpg?raw=true "Node.JS Transmitter")
+
 Raspberry pi serves website and client connects back to raspberry pi via websocket connection. Data is send 50 time a second, sent via websocket as Uint16Array(16) via a webworker.
 
 UI updating is handled by utilizing requestAnimationFrame which produces smooth movement of ui controls and feedback.
