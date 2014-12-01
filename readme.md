@@ -62,7 +62,7 @@ UI updating is handled by utilizing requestAnimationFrame which produces smooth 
 	Future
 		Track view Editor for Recording of movements, tweaking of movements
 		Camera Stream
-		Port to UI to Knockoutjs
+		Port to UI to Knockoutjs, all the cool kids are doing it.
 
 
 
